@@ -46,8 +46,16 @@ import dev.openfeature.sdk.EvaluationContext;
 import dev.openfeature.sdk.MutableContext;
 import dev.openfeature.sdk.OpenFeatureAPI;
 import java.util.UUID;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.TimeUnit;
 
 
+// new changes of my code
+// added New random error in the line 150
+// error inducing after 50 mins in line 93
 public final class AdService {
 
   private static final Logger logger = LogManager.getLogger(AdService.class);
@@ -82,6 +90,10 @@ public final class AdService {
                         new IllegalStateException(
                             "environment vars: AD_SERVICE_PORT must not be null")));
     healthMgr = new HealthStatusManager();
+
+    // Schedule error induction after 50 minutes
+    scheduler.schedule(() -> induceError.set(true), 50, TimeUnit.MINUTES);
+
 
     // Create a flagd instance with OpenTelemetry
     FlagdOptions options =
@@ -146,6 +158,15 @@ public final class AdService {
      * @param responseObserver the stream observer which gets notified with the value of {@code
      *     AdResponse}
      */
+    private void ThrowRandomError() {         // Introduced Random Error
+      double errorRate = 0.1;
+      if (random.nextDouble() < errorRate) {
+        Status.Code[] errors = {Status.Code.UNAVAILABLE, Status.Code.INTERNAL, Status.Code.PERMISSION_DENIED};
+        Status.Code randomError = errors[random.nextInt(errors.length)];
+        throw new StatusRuntimeException(Status.fromCode(randomError));
+      }
+    }
+
     @Override
     public void getAds(AdRequest req, StreamObserver<AdResponse> responseObserver) {
       AdService service = AdService.getInstance();
@@ -153,6 +174,14 @@ public final class AdService {
       // get the current span in context
       Span span = Span.current();
       try {
+
+     //   TimeUnit.MINUTES.sleep(1);          // dealy of 1 mins
+        // Check if error should be induced
+        if (service.induceError.get()) {
+          throw new StatusRuntimeException(Status.INTERNAL.withDescription("Induced error after 50 minutes"));
+        }
+        ThrowRandomError();
+
         List<Ad> allAds = new ArrayList<>();
         AdRequestType adRequestType;
         AdResponseType adResponseType;

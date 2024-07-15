@@ -1,13 +1,12 @@
 # Copyright The OpenTelemetry Authors
 # SPDX-License-Identifier: Apache-2.0
 
-# we are in Ashish Branch 
-
 x-default-logging: &logging
   driver: "json-file"
   options:
     max-size: "5m"
     max-file: "2"
+    tag: "{{.Name}}"
 
 networks:
   default:
@@ -47,7 +46,7 @@ services:
 
   # AdService
   adservice:
-    image: ${IMAGE_NAME}:${DEMO_VERSION}-adservice
+    image: ${IMAGE_NAME}:${DEMO_VERSION}-adservice //  -- .env
     container_name: ad-service
     build:
       context: ./

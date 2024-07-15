@@ -46,5 +46,3 @@ src/*/*/Dockerfile
 ./src/featureflagservice/priv/static/assets/
 ./src/featureflagservice/priv/static/cache_manifest.json
 ###################################
-
-hehe ok ok
